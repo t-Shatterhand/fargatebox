@@ -6,7 +6,7 @@ def lambda_handler(event, context):
     headers = event.get("headers")
     api_key = headers.get("x-api-key")
 
-    cluster_arn = "arn:aws:ecs:eu-north-1:123456789012:cluster/Diploma_cluster"
+    cluster_arn = "${cluster_arn}"
 
     dynamodb = boto3.client('dynamodb')
     ecs = boto3.client('ecs')
@@ -14,7 +14,7 @@ def lambda_handler(event, context):
 
     dynamodb_record = dynamodb.get_item(
         Key={'api_key': {'S': api_key}},
-        TableName='Diploma_User_Table',
+        TableName='${dynamodb_table_name}',
     )
 
     answer = {}
@@ -74,7 +74,7 @@ def lambda_handler(event, context):
 
     try:
         record_delete_response = dynamodb.delete_item(
-            TableName='Diploma_User_Table',
+            TableName='${dynamodb_table_name}',
             Key={'api_key': {'S': api_key}}
         )
         is_db_record_removed = True

@@ -7,14 +7,14 @@ def lambda_handler(event, context):
     elb = boto3.client('elbv2')
     dynamodb = boto3.client('dynamodb')
 
-    cluster_arn = 'arn:aws:ecs:eu-north-1:123456789012:cluster/Diploma_cluster'
+    cluster_arn = '${cluster_arn}'
 
     is_service_active = True
     is_alb_active = True
     is_db_record_present = True
 
     dynamodb_record = dynamodb.get_item(
-        TableName='Diploma_User_Table',
+        TableName='${dynamodb_table_name}',
         Key={'api_key': {'S': event['api_key']}}
     )
 
@@ -55,7 +55,7 @@ def lambda_handler(event, context):
 
     try:
         record_delete_response = dynamodb.delete_item(
-            TableName='Diploma_User_Table',
+            TableName='${dynamodb_table_name}',
             Key={'api_key': {'S': event['api_key']}}
         )
     except Exception:

@@ -1,0 +1,71 @@
+{
+  "Comment": "Step functions workflow to deploy user containers in ELB with further deletion scheduled.",
+  "StartAt": "Create task definition, service + alb record",
+  "States": {
+    "Create task definition, service + alb record": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "${create_task_definition_function_arn}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "Choice"
+    },
+    "Choice": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.is_failed",
+          "BooleanEquals": false,
+          "Next": "Wait"
+        }
+      ],
+      "Default": "Fail"
+    },
+    "Wait": {
+      "Type": "Wait",
+      "SecondsPath": "$.time",
+      "Next": "Remove service + alb record"
+    },
+    "Remove service + alb record": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "${remove_service_function_arn}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "End": true
+    },
+    "Fail": {
+      "Type": "Fail"
+    }
+  }
+}

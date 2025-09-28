@@ -12,11 +12,11 @@ def lambda_handler(event, context):
     unique_id = secrets.token_hex(32)
     service_id = event['api_key'] + unique_id
 
-    cluster_arn = 'arn:aws:ecs:eu-north-1:123456789012:cluster/Diploma_cluster'
-    elb_arn = 'arn:aws:elasticloadbalancing:eu-north-1:123456789012:loadbalancer/app/albtest/5fddcaec18b63796'
-    certificate_arn = 'arn:aws:acm:eu-north-1:123456789012:certificate/eee555444-149c-47c1-8af8-931c34072218'
+    cluster_arn = '${cluster_arn}'
+    elb_arn = '${elb_arn}'
+    certificate_arn = '${certificate_arn}'
 
-    scan = dynamodb.scan(TableName='Diploma_User_Table')
+    scan = dynamodb.scan(TableName='${dynamodb_table_name}')
     busy_ports = [int(x.get("port", {}).get("N", "0")) for x in scan.get("Items")]
     out_port = random.choice(list(set([x for x in range(9000, 11000)]) - set(busy_ports)))
     event['out_port'] = out_port
@@ -71,7 +71,7 @@ def lambda_handler(event, context):
             Name='tg-' + str(out_port),
             Protocol='HTTP',
             Port=event['in_port'],
-            VpcId='vpc-0d34b702b2b8018f8',
+            VpcId='${vpc_id}',
             HealthCheckEnabled=True,
             HealthCheckIntervalSeconds=40,
             HealthCheckTimeoutSeconds=15,
@@ -125,7 +125,7 @@ def lambda_handler(event, context):
             networkConfiguration={
                 'awsvpcConfiguration': {
                     'subnets': [
-                        'subnet-05f8d1a702539c162', 'subnet-02c1dda1e78052c0c', 'subnet-0d44f6738bd6954b8'
+                        ${subnet_ids}
                     ],
                     'assignPublicIp': 'ENABLED'
                 }
@@ -171,7 +171,7 @@ def lambda_handler(event, context):
                 service_removed = False
         try:
             record_delete_response = dynamodb.delete_item(
-                TableName='Diploma_User_Table',
+                TableName='${dynamodb_table_name}',
                 Key={'api_key': {'S': event['api_key']}}
             )
             db_record_removed = True
@@ -186,7 +186,7 @@ def lambda_handler(event, context):
         return event
 
     record_update_response = dynamodb.update_item(
-        TableName='Diploma_User_Table',
+        TableName='${dynamodb_table_name}',
         Key={'api_key': {'S': event['api_key']}},
         ExpressionAttributeNames={
             '#P': 'port',

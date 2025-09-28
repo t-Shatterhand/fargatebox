@@ -8,7 +8,7 @@ def dynamodb_delete(api_key):
     dynamodb = boto3.client('dynamodb')
 
     record_delete_response = dynamodb.delete_item(
-        TableName='Diploma_User_Table',
+        TableName='${dynamodb_table_name}',
         Key={'api_key': {'S': api_key}}
     )
     return record_delete_response
@@ -26,7 +26,7 @@ def lambda_handler(event, context):
     headers = event.get("headers")
     api_key = headers.get("x-api-key")
 
-    state_machine_arn = 'arn:aws:states:eu-north-1:123456789012:stateMachine:Diploma_Main_State_Function'
+    state_machine_arn = '${state_machine_arn}'
 
     dynamodb = boto3.client('dynamodb')
 
@@ -36,7 +36,7 @@ def lambda_handler(event, context):
                 'S': str(api_key),
             },
         },
-        TableName='Diploma_User_Table',
+        TableName='${dynamodb_table_name}',
     )
 
     if dynamodb_record.get("Item") is not None:
@@ -44,7 +44,7 @@ def lambda_handler(event, context):
         if port == "0":
             text = "Image is currently being deployed. Check /GET endpoint later to find out url"
         else:
-            text = "Image deployment already exists by url loadbalancer.kostroba.pp.ua:" + port
+            text = "Image deployment already exists by url ${loadbalancer_url}" + port
         return create_response(text, 409)
 
     dynamodb.put_item(
@@ -52,7 +52,7 @@ def lambda_handler(event, context):
             'api_key':
                 {'S': api_key}
         },
-        TableName='Diploma_User_Table'
+        TableName='${dynamodb_table_name}'
     )
 
     body = json.loads(event.get("body"))

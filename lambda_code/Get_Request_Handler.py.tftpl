@@ -10,7 +10,7 @@ def lambda_handler(event, context):
 
     dynamodb_record = dynamodb.get_item(
         Key={'api_key': {'S': str(api_key)}},
-        TableName='Diploma_User_Table',
+        TableName='${dynamodb_table_name}',
     )
 
     response = {}
@@ -33,7 +33,7 @@ def lambda_handler(event, context):
             'body': json.dumps(response)
         }
 
-    response['response'] = "You have an image deployed by url loadbalancer.kostroba.pp.ua:" + str(port)
+    response['response'] = "You have an image deployed by url ${loadbalancer_url}" + str(port)
 
     return {
         'statusCode': 200,
